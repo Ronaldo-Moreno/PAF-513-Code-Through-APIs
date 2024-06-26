@@ -1,0 +1,162 @@
+---
+title: "APIs: The Energy Information Administration"
+author: "Ronaldo Moreno"
+date: "`r format(Sys.time(), '06 23 24')`"
+output:
+  html_document:
+    theme: readable
+    df_print: paged
+    highlight: tango
+    toc: yes
+    toc_float: yes
+---
+
+
+
+```{r include = FALSE}
+
+# SET GLOBAL KNITR OPTIONS
+
+knitr::opts_chunk$set(echo = TRUE, 
+                      message = FALSE, 
+                      warning = FALSE, 
+                      fig.width = 10, 
+                      fig.height = 8)
+
+
+
+# LOAD PACKAGES
+
+library(pander)
+library(kableExtra)
+
+```
+
+<br>
+<br>
+
+# Introduction
+
+This code through further explores APIs. 
+
+<br>
+
+## Content Overview
+
+Specifically, we'll explain and demonstrate how to gain access to an API from the U.S. Energy Information Administration in R.
+
+<br>
+
+## Why You Should Care
+
+This topic is valuable because it will expand your access to databases and improve your analytical skills. It will also promote data openness. 
+
+<br>
+
+## Learning Objectives
+
+Specifically, you'll learn how to...
+
+  *Get an API token or API key
+  *Call an API
+  *Learn how to convert raw data into a readable format
+  *Learn common policies and practice around APIs
+
+<br>
+<br>
+
+## Theory
+
+An Application Programming Interface (API) defines how a client and server request and respond for information via software. There 4 different ways APIs can work, but Representational State Transfer (REST) tends to be the most used. REST APIs work the same way a web page does where a user sends requests to a server and they output data back to the user. In our case, we are directly accessing data through an API endpoint. A good metaphor would be a student going to a library and picking up a special in-library book from the front desk. The book is available for the student to request and view within the library upon proper request, but isn't allowed access into the special section. An API key grants a user access to a library where they can send requests to a librarian (server) that goes and retrieves the requested material (data) for security and efficieny purposes. 
+
+# Registering for an API
+
+We first need to register for an API key on the EIA website: https://www.eia.gov/opendata/. From there you will need to input some basic information and an email so they can send you a key. Once you receive the email, click on the verification link and check your email again for your unique key.
+
+
+## Basic Example
+
+From there we can begin by installing the necessary packages and loading them into our library.
+
+
+```{r}
+library(httr)
+```
+
+
+Every website has a specific format for calls to their database. EIA has simplified this process by providing a dashboard for you to input your search criteria for the desired dataset. This dashboard can be found here: https://www.eia.gov/opendata/browser/seds?frequency=annual&data=value;&facets=stateId;&stateId=AZ;&sortColumn=period;&sortDirection=desc;
+
+After you've set your criteria it will generate an API URL for you to use with your API key to make a call. The following code utilizes both and the GET function to assign it to an api_call. 
+
+```{r}
+api_call <- httr::GET("https://api.eia.gov/v2/seds/data/frequency=annual&data[0]=value&facets[stateId][]=AZ&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=5000?api_key=k5hiabhDYCE2Fuwlt093OkqaYQG7y7cN0R4ubzUq")
+
+### when inputing your unique api key it is important to input as shown above. The URL ended at 5000 so I began by typing ?api_key= and then my unique key. Otherwise EIA will not grant you authorization. 
+```
+
+After we've assigned the call, we need to ensure that the server has successfully granted us access. A code of 200 means it was a success. Anything else signifies an issue. For example, a status code of 403 "Forbidden" means your call is not authorized. This could be due to a number of issues, but most likely a formatting issue such as not placing your API key in the appropriate location. I ran into this issue when attempting to make a call. I incorrectly placed my API key at the beginning of the API URl instead of at the end as specified by the EIA.
+
+```{r}
+api_call$status_code
+```
+
+
+## Calling Data
+
+As now we have access to the desired data, but it is currently not in any readable format as the following code shows.
+```{r}
+api_call$content
+```
+
+
+## Converting the Data
+
+So to convert this data into a readable format we're going to utilize the base() and input the content above. From there we pass api_content into the jsonlite() and the flatten() to convert it into a readable table.
+
+```{r}
+api_content <- base::rawToChar(api_call$content)
+
+api_json <- jsonlite::fromJSON(api_content, flatten = TRUE)
+api_json
+```
+
+
+## Conclusion
+
+From there we can begin manipulating the data frame for our desired outcome. As previously noted, each organization has there own guidelines for how data can be used and formatting for API URLs. The EIA's policy and reference material can be found in the resources section of this code through. There are also readings explaining the different types of APIs and that go more in-depth. I also listed potential APIs for those interested in the energy industry. If you have any questions or just want to talk about topics related to energy and sustainability feel free to reach me at rmoren38@asu.edu.
+
+
+
+<br> 
+<br>
+
+## Further Resources
+
+Learn more about [APIs] with the following:
+
+<br>
+
+* Resource I [APIs](https://aws.amazon.com/what-is/api/)
+
+* Resource II [EIA API Policy](https://www.eia.gov/about/copyrights_reuse.php)
+
+* Resource III [Utilities Sector](https://www.investopedia.com/terms/u/utilities_sector.asp)
+
+
+<br>
+<br>
+
+## Works Cited
+
+This code through references and cites the following sources:
+
+<br>
+
+* UtilityAPI (2024). [Utility API](https://utilityapi.com/docs/quickstart)
+
+* Bauer, Paul C., Landesvatter, Camille, Behrens, Lion, & et al. (June 21, 2024). [APIs for Social Scientists](https://paulcbauer.github.io/apis_for_social_scientists_a_review/best-practices.html)
+
+* EIA (2024) https://www.eia.gov/opendata/documentation.php
+
+<br>
+<br>
